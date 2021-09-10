@@ -107,10 +107,26 @@ while pageNumber <= totalPageCount:
     contentNumber = 2
 
 
+
 print("Done!                                     \n") # Clear line
 
 
+import re
+def handleTitle(string):
+    old = re.findall('title="\(bkz:[^()]*\)"', string)[0]
+    new = re.sub(" ","",old)
+    result = string.replace(old,new)
+    return result
+
+def handleDataquery(string):
+    old = re.findall('data-query="[a-zA-ZıöçşüğİÖŞÇÜĞ ]*"', string)[0]
+    new = re.sub(" ","",old)
+    result = string.replace(old,new)
+    return result
+
 def changeHtmlFormat(text, searchContent):
+    text = handleTitle(text)
+    text = handleDataquery(text)
     li = text.split(" ")
     res = """<!DOCTYPE html><html lang="en">
     <head>
@@ -132,8 +148,8 @@ def changeHtmlFormat(text, searchContent):
         if 'href="' in item and not 'href="ht' in item:
             a = item.split("/", 1)
             res += a[0] + "https://eksisozluk.com/" + a[1] + " "
-        elif searchContent in item:
-            res += ' <mark style="display:inline"> ' + str(item) + ' </mark> ' + " "
+        elif searchContent in item and not "data-query" in item and not "title" in item:
+            res += ' <mark style="display:inline">' + str(item) + '</mark> ' + " "
         else:
             res += item + " "
     
