@@ -80,6 +80,7 @@ try:
     pageCount = soup.select("#topic > div.clearfix.sub-title-container > div.pager")[0].get("data-pagecount")
 except:
     print("Title is not found! Write title with as you see in title with turkish letters or use links.")
+    print('NOTE: Single page titles are judged as "Title is not found!"')
     exit(-1)
 totalPageCount = int (pageCount)
 
