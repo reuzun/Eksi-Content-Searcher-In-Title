@@ -26,6 +26,9 @@ parser.add_argument('-s', '--search', type=str,
 parser.add_argument('-f', '--fast', action='store_true', default = False,
                     help='You shoudl type pip3 install lxml to enable this')
 
+parser.add_argument('--html', action='store_true', default = False,
+                    help='outputs a html file with txt file.')
+
 
 args = parser.parse_args()
 
@@ -80,6 +83,7 @@ except:
     exit(-1)
 totalPageCount = int (pageCount)
 
+html = args.html
 
 while pageNumber <= totalPageCount:
     r = requests.get(url + str(pageNumber), headers = headers)
@@ -88,9 +92,14 @@ while pageNumber <= totalPageCount:
     soup = BeautifulSoup(r.content, parser)
     while contentNumber < 14: # Last entry is numbered as 13.
         try:
-            entry = soup.select("#entry-item-list > li:nth-child(" + str(contentNumber) +") > div.content")[0].text
-            if searchContent in entry:
+            if html:
+                entry = soup.select("#entry-item-list > li:nth-child(" + str(contentNumber) +") > div.content")[0].prettify()
+            else:
+                entry = soup.select("#entry-item-list > li:nth-child(" + str(contentNumber) +") > div.content")[0].text
+            if searchContent in entry and not html:
                 sb += "Page number : " + str(pageNumber - 1) + "\n\n" + entry + "\n"
+            elif searchContent in entry and html:
+                sb += "<hr>Page number : " + str(pageNumber - 1) + "\n\n" + entry + "<br>"
             contentNumber = contentNumber + 1
         except IndexError:
             contentNumber = contentNumber + 1
@@ -98,15 +107,49 @@ while pageNumber <= totalPageCount:
     contentNumber = 2
 
 
-
 print("Done!                                     \n") # Clear line
 
-print("Result is:\n")
-print(sb)
 
-f = open(title + "-" + args.search + ".txt", "w")
-f.write(sb)
-f.close()
+def changeHtmlFormat(text, searchContent):
+    li = text.split(" ")
+    res = """<!DOCTYPE html><html lang="en">
+    <head>
+        <title>Result</title>
+        <style>
+            body{
+                max-width: 700px;
+                margin:auto;
+            }
+            *::selection{
+                color: red;
+                text-shadow: 2px 2px 20px yellow;
+            }
+        </style>
+    </head>
+    <body>"""
+    
+    for item in li:
+        if 'href="' in item and not 'href="ht' in item:
+            a = item.split("/", 1)
+            res += a[0] + "https://eksisozluk.com/" + a[1] + " "
+        elif searchContent in item:
+            res += ' <mark style="display:inline"> ' + str(item) + ' </mark> ' + " "
+        else:
+            res += item + " "
+    
+    res += """</body></html> """
+    return res
+
+
+
+if html:
+    f = open(title + "-" + args.search + ".html", "w")
+    f.write(changeHtmlFormat(sb, searchContent))
+    f.close()
+else:
+    f = open(title + "-" + args.search + ".txt", "w")
+    f.write(sb)
+    f.close()
 
 endTime = current_milli_time()
 
