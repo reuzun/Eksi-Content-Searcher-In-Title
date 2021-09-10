@@ -37,7 +37,7 @@ if "htt" and ".com" in args.title:
     title = link[0]
     
 else: #Means its just a title
-    print("https://eksisozluk.com/?q=" + args.title)
+    #print("https://eksisozluk.com/?q=" + args.title)
     r = requests.get("https://eksisozluk.com/?q=" + args.title, headers = headers)
     soup = BeautifulSoup(r.content, 'html.parser')
     f = open("a.html", "w")
@@ -55,10 +55,15 @@ searchContent = args.search
 sb = ""
 
 # Getting total page count
-print("url is : ", url)
+#print("url is : ", url)
 r = requests.get(url + str(pageNumber), headers = headers)
 soup = BeautifulSoup(r.content, 'html.parser')
-pageCount = soup.select("#topic > div.clearfix.sub-title-container > div.pager")[0].get("data-pagecount")
+pageCount = 0
+try:
+    pageCount = soup.select("#topic > div.clearfix.sub-title-container > div.pager")[0].get("data-pagecount")
+except:
+    print("Title is not found! Write title with as you see in title with turkish letters or use links.")
+    exit(-1)
 totalPageCount = int (pageCount)
 
 
