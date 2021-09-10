@@ -3,6 +3,11 @@ import requests
 
 import argparse
 
+def changeTrwordToEnWord(word):
+    word = word.split(".", 1)
+    a = word[1].replace("ç", "c").replace("ö", "o").replace("ü", "u").replace("ş", "s").replace("ı", "i").replace("ğ", "g").replace("'", "").replace(".", "-")
+    return word[0] + "." + a
+
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='Optional app description')
 
@@ -32,11 +37,14 @@ if "htt" and ".com" in args.title:
     title = link[0]
     
 else: #Means its just a title
+    print("https://eksisozluk.com/?q=" + args.title)
     r = requests.get("https://eksisozluk.com/?q=" + args.title, headers = headers)
     soup = BeautifulSoup(r.content, 'html.parser')
+    f = open("a.html", "w")
+    f.write(str(soup))
     dataNumber = soup.select("#title")[0].get("data-id")
-    link ="https://eksisozluk.com/"+ args.title + "--" + str(dataNumber) + "?p="
-    url = link
+    link ="https://eksisozluk.com/"+ args.title.replace(" ", "-") + "--" + str(dataNumber) + "?p="
+    url = changeTrwordToEnWord(link)
 
 
 pageNumber = 1
@@ -47,6 +55,7 @@ searchContent = args.search
 sb = ""
 
 # Getting total page count
+print("url is : ", url)
 r = requests.get(url + str(pageNumber), headers = headers)
 soup = BeautifulSoup(r.content, 'html.parser')
 pageCount = soup.select("#topic > div.clearfix.sub-title-container > div.pager")[0].get("data-pagecount")
