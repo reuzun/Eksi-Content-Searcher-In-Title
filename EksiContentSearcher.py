@@ -17,17 +17,17 @@ def changeTrwordToEnWord(word):
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='Optional app description')
 
-parser.add_argument('-t', '--title', type=str,
+parser.add_argument('-t', '--title', type=str, required = True,
                     help='Title or Url of title')
 
-parser.add_argument('-s', '--search', type=str, 
+parser.add_argument('-s', '--search', type=str, required = True,
                     help='What we are searching in this title')
 
 parser.add_argument('-f', '--fast', action='store_true', default = False,
-                    help='You shoudl type pip3 install lxml to enable this')
+                    help='You should type pip3 install lxml to enable this.')
 
-parser.add_argument('--html', action='store_true', default = False,
-                    help='outputs a html file with txt file.')
+parser.add_argument('--txt', action='store_false', default = True,
+                    help='outputs a txt file instead of html file.')
 
 
 args = parser.parse_args()
@@ -83,7 +83,7 @@ except:
     exit(-1)
 totalPageCount = int (pageCount)
 
-html = args.html
+html = args.txt
 
 while pageNumber <= totalPageCount:
     r = requests.get(url + str(pageNumber), headers = headers)
@@ -107,26 +107,10 @@ while pageNumber <= totalPageCount:
     contentNumber = 2
 
 
-
 print("Done!                                     \n") # Clear line
 
 
-import re
-def handleTitle(string):
-    old = re.findall('title="\(bkz:[^()]*\)"', string)[0]
-    new = re.sub(" ","",old)
-    result = string.replace(old,new)
-    return result
-
-def handleDataquery(string):
-    old = re.findall('data-query="[a-zA-ZıöçşüğİÖŞÇÜĞ ]*"', string)[0]
-    new = re.sub(" ","",old)
-    result = string.replace(old,new)
-    return result
-
 def changeHtmlFormat(text, searchContent):
-    text = handleTitle(text)
-    text = handleDataquery(text)
     li = text.split(" ")
     res = """<!DOCTYPE html><html lang="en">
     <head>
@@ -148,8 +132,8 @@ def changeHtmlFormat(text, searchContent):
         if 'href="' in item and not 'href="ht' in item:
             a = item.split("/", 1)
             res += a[0] + "https://eksisozluk.com/" + a[1] + " "
-        elif searchContent in item and not "data-query" in item and not "title" in item:
-            res += ' <mark style="display:inline">' + str(item) + '</mark> ' + " "
+        elif searchContent in item:
+            res += ' <mark style="display:inline"> ' + str(item) + ' </mark> ' + " "
         else:
             res += item + " "
     
