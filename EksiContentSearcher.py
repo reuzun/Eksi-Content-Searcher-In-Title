@@ -29,6 +29,9 @@ parser.add_argument('-f', '--fast', action='store_true', default = False,
 parser.add_argument('--txt', action='store_false', default = True,
                     help='outputs a txt file instead of html file.')
 
+parser.add_argument('--dark', action='store_true', default = False,
+                    help='outputs a txt file instead of html file.')
+
 
 args = parser.parse_args()
 
@@ -132,24 +135,134 @@ print("Done!                                     \n") # Clear line
 
 
 def changeHtmlFormat(text, searchContent):
+    color = ""
+    if args.dark == True:
+        color = "#4E1D1D"
+    else:
+        color = "#ffffff"
     text = handleTitle(text)
     text = handleDataquery(text)
     li = text.split(" ")
     res = """<!DOCTYPE html><html lang="en">
     <head>
         <title>Result</title>
-        <style>
+        <style id="styling">
             body{
                 max-width: 700px;
                 margin:auto;
+                background-color: """ + color + """
             }
             *::selection{
-                color: red;
-                text-shadow: 2px 2px 20px yellow;
+                /*color: red;*/
+                background-color: #B3A9E1;
+                /*text-shadow: 2px 2px 20px yellow;*/
+                text-shadow: 1px 1px 4px #113706;
             }
         </style>
+        <script>
+            function invertColor(hex, bw) {
+                if (hex.indexOf('#') === 0) {
+                    hex = hex.slice(1);
+                }
+                // convert 3-digit hex to 6-digits.
+                if (hex.length === 3) {
+                    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+                }
+                if (hex.length !== 6) {
+                    throw new Error('Invalid HEX color.');
+                }
+                var r = parseInt(hex.slice(0, 2), 16),
+                    g = parseInt(hex.slice(2, 4), 16),
+                    b = parseInt(hex.slice(4, 6), 16);
+                if (bw) {
+                    // http://stackoverflow.com/a/3943023/112731
+                    return (r * 0.299 + g * 0.587 + b * 0.114) > 186
+                        ? '#000000'
+                        : '#FFFFFF';
+                }
+                // invert color components
+                r = (255 - r).toString(16);
+                g = (255 - g).toString(16);
+                b = (255 - b).toString(16);
+                // pad each with zeros and return
+                return "#" + padZero(r) + padZero(g) + padZero(b);
+            }
+
+            function padZero(str, len) {
+                len = len || 2;
+                var zeros = new Array(len).join('0');
+                return (zeros + str).slice(-len);
+            }
+
+            function rgbToHex(color) {
+                color = ""+ color;
+                if (!color || color.indexOf("rgb") < 0) {
+                    return;
+                }
+
+                if (color.charAt(0) == "#") {
+                    return color;
+                }
+
+                var nums = /(.*?)rgb\((\d+),\s*(\d+),\s*(\d+)\)/i.exec(color),
+                    r = parseInt(nums[2], 10).toString(16),
+                    g = parseInt(nums[3], 10).toString(16),
+                    b = parseInt(nums[4], 10).toString(16);
+
+                return "#"+ (
+                    (r.length == 1 ? "0"+ r : r) +
+                    (g.length == 1 ? "0"+ g : g) +
+                    (b.length == 1 ? "0"+ b : b)
+                );
+            }
+
+                    
+            document.addEventListener("DOMContentLoaded", function(){
+                let colorPicker = document.querySelector("#bgcolor");
+                let marker = document.querySelector("#marking");
+                let cssFile = document.querySelector("#styling").sheet;
+                
+                bgColor = getComputedStyle(document.querySelector("body")).backgroundColor
+                
+                
+                colorPicker.value = rgbToHex(bgColor)
+                document.querySelector("body").style["color"] = invertColor(colorPicker.value);
+                
+                colorPicker.addEventListener("input", ()=>{
+                    document.querySelector("body").style["background-color"] = colorPicker.value;
+                    document.querySelector("body").style["color"] = invertColor(colorPicker.value);
+                });
+                let bool = false;
+                marker.addEventListener("change", ()=>{
+                    if(marker.checked == true){
+                        if (bool) cssFile.deleteRule(0);
+                        bgColor = getComputedStyle(document.querySelector("body")).backgroundColor
+                        let textColor = getComputedStyle(document.querySelector("body")).color
+                        let color = rgbToHex(bgColor);
+                        let color2 = rgbToHex(textColor);
+                        let style = `mark{background-color:${color};color:${color2}}`
+                        cssFile.insertRule(style, 0);
+                        bool = true;
+                    }else{
+                        cssFile.deleteRule(0);
+                        let style = `mark{background-color:yellow;color:black}`
+                        cssFile.insertRule(style, 0);
+                    }
+                });
+                
+            });
+
+        </script>
     </head>
-    <body>"""
+    <body>
+
+    <label for="bgcolor">Select your background-color:</label>
+    <input type="color" id="bgcolor" name="bgcolor" value="#ffffff"><br><br>
+
+    <label for="marking">disable marking:</label>
+    <input type="checkbox" id="marking" name="marking" ><br><br>
+
+    """
     
     for item in li:
         if 'href="' in item and not 'href="ht' in item:
