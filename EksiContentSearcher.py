@@ -32,6 +32,10 @@ parser.add_argument('--txt', action='store_false', default = True,
 
 args = parser.parse_args()
 
+if len(args.search) < 2:
+    print("Search word must contain at least 2 character.")
+    exit(-1)
+
 parser = "html.parser"
 if(args.fast == True):
     parser = "lxml"
@@ -56,7 +60,6 @@ if "htt" and ".com" in args.title:
     title = link[0]
     
 else: #Means its just a title
-    #print("https://eksisozluk.com/?q=" + args.title)
     r = requests.get("https://eksisozluk.com/?q=" + args.title, headers = headers)
     soup = BeautifulSoup(r.content, parser)
     dataNumber = soup.select("#title")[0].get("data-id")
@@ -72,7 +75,6 @@ searchContent = args.search
 sb = ""
 
 # Getting total page count
-#print("url is : ", url)
 r = requests.get(url + str(pageNumber), headers = headers)
 soup = BeautifulSoup(r.content, parser)
 pageCount = 0
@@ -85,7 +87,25 @@ except:
 totalPageCount = int (pageCount)
 
 html = args.txt
+import re
+def handleTitle(string):
+    old = re.findall(r'title="\(bkz:[^()]*\)"', string)#Think numbers
+    if len(old) == 0: return string
+    new = re.sub(" ","",old[0])
+    result = string.replace(old[0],new)
+    return result
 
+def handleDataquery(string):
+    old = re.findall(r'data-query="[a-zA-ZıöçşüğİÖŞÇÜĞ ]*"', string) #Think numbers
+    if len(old) == 0: return string
+    new = re.sub(" ","",old[0])
+    result = string.replace(old[0],new)
+    return result
+
+def eveluateEntry(string):
+    string = handleTitle(string)
+    return re.sub(r'(?<!(data-query="|..........q=|title="\(bkz:)|...........-|.........../|........www\.)' + searchContent + r'(?!".*>)', '<mark style:"display:inline;">' + searchContent + '</mark>', string)
+    
 while pageNumber <= totalPageCount:
     r = requests.get(url + str(pageNumber), headers = headers)
     print("We are scanning page ", pageNumber, "over pages :", str(totalPageCount), "\b\r", end="")
@@ -100,7 +120,7 @@ while pageNumber <= totalPageCount:
             if searchContent in entry and not html:
                 sb += "Page number : " + str(pageNumber - 1) + "\n\n" + entry + "\n"
             elif searchContent in entry and html:
-                sb += "<hr>Page number : " + str(pageNumber - 1) + "\n\n" + entry + "<br>"
+                sb += "<hr>Page number : " + str(pageNumber - 1) + eveluateEntry(entry) + "<br>"
             contentNumber = contentNumber + 1
         except IndexError:
             contentNumber = contentNumber + 1
@@ -110,19 +130,6 @@ while pageNumber <= totalPageCount:
 
 print("Done!                                     \n") # Clear line
 
-
-import re
-def handleTitle(string):
-    old = re.findall('title="\(bkz:[^()]*\)"', string)[0]
-    new = re.sub(" ","",old)
-    result = string.replace(old,new)
-    return result
-
-def handleDataquery(string):
-    old = re.findall('data-query="[a-zA-ZıöçşüğİÖŞÇÜĞ ]*"', string)[0]
-    new = re.sub(" ","",old)
-    result = string.replace(old,new)
-    return result
 
 def changeHtmlFormat(text, searchContent):
     text = handleTitle(text)
@@ -148,8 +155,6 @@ def changeHtmlFormat(text, searchContent):
         if 'href="' in item and not 'href="ht' in item:
             a = item.split("/", 1)
             res += a[0] + "https://eksisozluk.com/" + a[1] + " "
-        elif searchContent in item and not "data-query" in item and not "title" in item:
-            res += ' <mark style="display:inline"> ' + str(item) + ' </mark> ' + " "
         else:
             res += item + " "
     
