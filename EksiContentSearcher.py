@@ -30,7 +30,7 @@ parser.add_argument('--txt', action='store_false', default = True,
                     help='outputs a txt file instead of html file.')
 
 parser.add_argument('--dark', action='store_true', default = False,
-                    help='outputs a txt file instead of html file.')
+                    help='outputs dark backgrounded html file.')
 
 
 args = parser.parse_args()
